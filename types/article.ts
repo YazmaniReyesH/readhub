@@ -1,7 +1,10 @@
-import type { Tables } from "@/types/database";
+import type { ArticleWithStats, Tables } from "@/types/database";
 
 /** Artículo (tabla `public.articles`). */
 export type Article = Tables<"articles">;
+
+/** Artículo enriquecido con autor y conteos (feed y detalle). */
+export type { ArticleWithStats };
 
 /** Registro de visualización (tabla `public.views`). */
 export type ArticleView = Tables<"views">;

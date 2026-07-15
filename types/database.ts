@@ -19,6 +19,35 @@ export type Json =
 
 export type UserRole = "reader" | "writer" | "admin";
 
+/**
+ * Fila devuelta por las funciones `get_articles_feed` y `get_article_detail`:
+ * artículo + nombre del autor + conteos agregados (views/likes/comments).
+ */
+export interface ArticleWithStats {
+  id: string;
+  title: string;
+  summary: string | null;
+  image_path: string | null;
+  document_path: string | null;
+  author_id: string;
+  author_name: string | null;
+  is_public: boolean;
+  created_at: string;
+  views_count: number;
+  likes_count: number;
+  comments_count: number;
+}
+
+/** Fila devuelta por `get_article_comments`: comentario + nombre del autor. */
+export interface CommentWithAuthor {
+  id: string;
+  article_id: string;
+  user_id: string;
+  comment: string;
+  created_at: string;
+  author_name: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -28,6 +57,7 @@ export interface Database {
           birth_date: string | null;
           phone: string | null;
           role: UserRole;
+          full_name: string | null;
           created_at: string;
         };
         Insert: {
@@ -35,6 +65,7 @@ export interface Database {
           birth_date?: string | null;
           phone?: string | null;
           role?: UserRole;
+          full_name?: string | null;
           created_at?: string;
         };
         Update: {
@@ -42,6 +73,7 @@ export interface Database {
           birth_date?: string | null;
           phone?: string | null;
           role?: UserRole;
+          full_name?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -240,6 +272,18 @@ export interface Database {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      get_articles_feed: {
+        Args: Record<string, never>;
+        Returns: ArticleWithStats[];
+      };
+      get_article_detail: {
+        Args: { p_article_id: string };
+        Returns: ArticleWithStats[];
+      };
+      get_article_comments: {
+        Args: { p_article_id: string };
+        Returns: CommentWithAuthor[];
       };
     };
     Enums: {

@@ -9,13 +9,15 @@ import {
 } from "@/lib/constants";
 
 /**
- * Refresca la sesión de Supabase en cada petición y sincroniza las cookies
- * de autenticación entre la petición y la respuesta.
- *
- * En esta etapa (infraestructura) el middleware únicamente mantiene la sesión
- * viva. La protección de rutas privadas se implementará en la sesión de
- * autenticación, sin necesidad de reestructurar este archivo.
+ * Refresca la sesión de Supabase en cada petición, sincroniza las cookies de
+ * autenticación y aplica la protección de rutas:
+ *  - Usuario NO autenticado → solo puede ver /login y /register.
+ *  - Usuario autenticado → no puede volver a /login ni /register.
  */
+
+/** Rutas públicas (accesibles sin sesión). */
+const PUBLIC_ROUTES = ["/login", "/register"];
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -48,7 +50,28 @@ export async function updateSession(request: NextRequest) {
 
   // IMPORTANTE: no colocar código entre `createServerClient` y `getUser()`.
   // `getUser()` revalida el token de autenticación con el servidor de Supabase.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  const isPublicRoute = PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  // Sin sesión y ruta protegida → login.
+  if (!user && !isPublicRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Con sesión y en una ruta de auth → home.
+  if (user && isPublicRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
 
   return supabaseResponse;
 }

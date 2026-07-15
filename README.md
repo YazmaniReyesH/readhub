@@ -5,8 +5,17 @@ registran, publican artículos (documento + imagen de portada) y consumen el
 contenido de otros con vistas, likes y comentarios.
 
 Este repositorio evoluciona a lo largo de toda la especialización. **Estado
-actual: Etapa 2 — Infraestructura base** (sin funcionalidades de negocio ni UI
-de dominio todavía).
+actual: Etapa 3 — MVP funcional** (autenticación, listado, publicación con
+subida de archivos, detalle con vistas/likes/comentarios) sobre la
+infraestructura de la Etapa 2.
+
+## Flujo del MVP
+
+Registro → inicio de sesión → home con listado de artículos → publicar un
+artículo (documento + portada a Supabase Storage) → abrir el artículo (registra
+una visualización) → dar "Me gusta" → comentar → cerrar sesión. Todas las
+rutas privadas están protegidas por middleware y todos los datos provienen de
+Supabase (RLS activa).
 
 ## Stack
 

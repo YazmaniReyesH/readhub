@@ -223,7 +223,47 @@ npm run gen:types      # regenera types/database.ts desde el esquema real
 
 ---
 
-## 8. Estrategia de escalabilidad
+## 8. Capa de presentación (Etapa 3 — MVP)
+
+El frontend respeta una separación estricta en tres capas:
+
+```
+Componentes (UI)  →  Custom Hooks (lógica)  →  Services (acceso a Supabase)
+```
+
+- **Services** (`services/`): único punto que habla con Supabase.
+  `auth.service`, `article.service`, `comment.service`, `storage.service`.
+- **Hooks** (`hooks/`): lógica de negocio y estado de React. `useAuth`
+  (contexto de sesión), `useArticles` (feed/detalle/creación/documento),
+  `useComments`, `useLikes`, `useUpload`. Consumen solo Services.
+- **Componentes** (`components/`): presentación. No llaman a Supabase
+  directamente; usan Hooks.
+
+**Rutas** (App Router con Route Groups):
+
+| Ruta            | Grupo         | Descripción                                  |
+| --------------- | ------------- | -------------------------------------------- |
+| `/login`        | `(auth)`      | Inicio de sesión (toggle a registro)         |
+| `/register`     | `(auth)`      | Registro                                     |
+| `/`             | `(dashboard)` | Home: listado de artículos                   |
+| `/upload`       | `(dashboard)` | Publicación de artículos                     |
+| `/article/[id]` | `(dashboard)` | Detalle: documento, likes y comentarios      |
+
+**Protección de rutas:** `middleware.ts` refresca la sesión y redirige a
+`/login` las rutas privadas sin sesión, y a `/` las de auth con sesión.
+
+**Migraciones añadidas en esta etapa** (no alteran las de la Etapa 2):
+
+- `0004_full_name_and_stats`: columna `profiles.full_name` + funciones
+  `SECURITY DEFINER` `get_articles_feed()` y `get_article_detail(uuid)` que
+  exponen autor y conteos (views/likes/comments) respetando la RLS.
+- `0005_comments_with_author`: `get_article_comments(uuid)` con el nombre del
+  autor de cada comentario.
+
+Estas funciones resuelven la necesidad de mostrar el nº de visualizaciones y el
+autor sin abrir las tablas `views` ni `profiles` (que siguen protegidas).
+
+## 9. Estrategia de escalabilidad
 
 - **Arquitectura modular** por responsabilidad (UI / hooks / services / lib /
   types) que no se reestructura entre sesiones, solo se amplía.
