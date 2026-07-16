@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   // Raíz del monorepo: evita el warning de múltiples lockfiles y acota el
   // rastreo de archivos a la raíz correcta.
   outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
+  // unpdf (extracción de texto de PDF) se ejecuta en el servidor; no bundlear.
+  serverExternalPackages: ["unpdf"],
   // Paquetes compartidos del monorepo (TypeScript sin precompilar).
   transpilePackages: [
     "@readhub/types",

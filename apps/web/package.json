@@ -11,7 +11,7 @@
     "db:seed": "node scripts/run-sql.mjs supabase/seed.sql",
     "db:test": "node scripts/run-sql.mjs supabase/tests/rls_validation.sql",
     "db:setup": "npm run db:migrate && npm run db:seed && npm run db:test",
-    "db:backfill": "node scripts/backfill-embeddings.mjs",
+    "db:backfill": "tsx scripts/backfill-embeddings.ts",
     "db:push": "supabase db push",
     "gen:types": "supabase gen types typescript --linked > ../../packages/types/src/database.ts"
   },

@@ -15,7 +15,8 @@
     "@readhub/ai": "*",
     "@readhub/config": "*",
     "@readhub/database": "*",
-    "@readhub/types": "*"
+    "@readhub/types": "*",
+    "unpdf": "^1.6.2"
   },
   "devDependencies": {
     "typescript": "^5"

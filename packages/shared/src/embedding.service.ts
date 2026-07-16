@@ -31,21 +31,42 @@ async function buildArticleText(article: {
   if (article.summary) parts.push(article.summary);
 
   const path = article.document_path;
-  if (path && normalizeDocPath(path).toLowerCase().endsWith(".txt")) {
-    try {
-      const admin = createAdminClient();
-      const { data, error } = await admin.storage
-        .from(STORAGE_BUCKETS.documents)
-        .download(normalizeDocPath(path));
-      if (!error && data) {
-        const text = (await data.text()).trim();
-        if (text) parts.push(text.slice(0, 6000));
-      }
-    } catch {
-      // Si el documento no se puede leer, se indexa con título + resumen.
-    }
+  if (path) {
+    const docText = await extractDocumentText(normalizeDocPath(path));
+    if (docText) parts.push(docText.slice(0, 6000));
   }
   return parts.join("\n\n");
+}
+
+/**
+ * Descarga un documento de Storage y extrae su texto.
+ * Soporta TXT y PDF. Para DOCX u otros formatos devuelve cadena vacía (se
+ * indexa con título + resumen). Nunca lanza: un fallo no debe romper el indexado.
+ */
+async function extractDocumentText(path: string): Promise<string> {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.storage
+      .from(STORAGE_BUCKETS.documents)
+      .download(path);
+    if (error || !data) return "";
+
+    const ext = path.toLowerCase().split(".").pop();
+    if (ext === "txt") {
+      return (await data.text()).trim();
+    }
+    if (ext === "pdf") {
+      const { extractText, getDocumentProxy } = await import("unpdf");
+      const buffer = new Uint8Array(await data.arrayBuffer());
+      const pdf = await getDocumentProxy(buffer);
+      // Con mergePages: true, `text` es un string único.
+      const { text } = await extractText(pdf, { mergePages: true });
+      return text.trim();
+    }
+    return "";
+  } catch {
+    return "";
+  }
 }
 
 /**
