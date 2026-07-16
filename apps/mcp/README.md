@@ -1,0 +1,76 @@
+# @readhub/mcp — Servidor MCP de ReadHub
+
+Servidor [Model Context Protocol](https://modelcontextprotocol.io) que expone las
+capacidades de ReadHub (búsqueda, RAG, artículos) a clientes MCP como Claude
+Desktop, Claude Code o el MCP Inspector. Reutiliza los paquetes compartidos del
+monorepo (`@readhub/shared`, `@readhub/database`, `@readhub/ai`) — no duplica
+lógica de negocio.
+
+Transporte: **STDIO**.
+
+## Capacidades
+
+**Tools:** `buscar_articulos`, `listar_articulos`, `obtener_articulo`,
+`buscar_semantica`, `responder_pregunta`, `comparar_articulos`,
+`extraer_temas_clave`, `construir_contexto_investigacion`.
+
+**Resources:** `readhub://info`, `readhub://articles`, `readhub://article/{id}`,
+`readhub://authors`, `readhub://categories`, `readhub://stats`.
+
+**Prompts:** `resumir_articulo`, `explicar_articulo`, `comparar_articulos`,
+`generar_preguntas`, `extraer_conceptos_clave`.
+
+## Requisitos
+
+Las claves de IA y Supabase se leen de `apps/web/.env.local` (VOYAGE_API_KEY,
+ANTHROPIC_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY). El
+servidor las carga automáticamente desde ahí.
+
+## Ejecutar
+
+```bash
+# Desde la raíz del monorepo
+npm run dev:mcp        # tsx watch (desarrollo)
+# o
+npm run start -w @readhub/mcp
+```
+
+### Probar con el MCP Inspector
+
+```bash
+npx @modelcontextprotocol/inspector node --import tsx apps/mcp/src/index.ts
+```
+
+### Conectar a Claude Desktop
+
+En `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "readhub": {
+      "command": "node",
+      "args": ["--import", "tsx", "src/index.ts"],
+      "cwd": "C:/ruta/a/readhub/apps/mcp"
+    }
+  }
+}
+```
+
+> El servidor escribe sus logs en `stderr` para no interferir con el protocolo
+> JSON-RPC (que viaja por `stdout`).
+
+## Arquitectura
+
+```
+Cliente MCP (Claude Desktop / Inspector)
+        │  STDIO (JSON-RPC)
+        ▼
+apps/mcp  →  Tools / Resources / Prompts
+        │
+        ▼
+@readhub/shared · @readhub/database · @readhub/ai   (paquetes compartidos)
+        │
+        ▼
+Supabase (pgvector) · Voyage (embeddings) · Claude (LLM)
+```

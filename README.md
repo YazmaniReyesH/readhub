@@ -1,89 +1,53 @@
-# ReadHub
+# ReadHub (monorepo)
 
-Plataforma SaaS de lectura y escritura (estilo Medium/Dev.to): los usuarios se
-registran, publican artículos (documento + imagen de portada) y consumen el
-contenido de otros con vistas, likes y comentarios.
+Plataforma SaaS de lectura/escritura con asistente de conocimiento (RAG) y un
+servidor **MCP** que expone sus capacidades a clientes como Claude Desktop.
 
-Este repositorio evoluciona a lo largo de toda la especialización. **Estado
-actual: Etapa 4 — Sistema RAG** (asistente conversacional + búsqueda semántica)
-sobre el MVP de la Etapa 3 y la infraestructura de la Etapa 2.
+Este repositorio evoluciona a lo largo de la especialización. **Estado actual:
+Etapa 5 — MCP + monorepo.**
 
-## Stack de IA (Etapa 4)
+## Estructura
 
-pgvector (Supabase) para la base vectorial · **Voyage AI** (`voyage-3.5`, 1024
-dim) para embeddings · **Claude** (`claude-opus-4-8`) para la generación. Flujo
-RAG: indexación automática al publicar → búsqueda semántica → construcción de
-contexto → respuesta fundamentada con citación de fuentes.
-
-## Flujo del MVP
-
-Registro → inicio de sesión → home con listado de artículos → publicar un
-artículo (documento + portada a Supabase Storage) → abrir el artículo (registra
-una visualización) → dar "Me gusta" → comentar → cerrar sesión. Todas las
-rutas privadas están protegidas por middleware y todos los datos provienen de
-Supabase (RLS activa).
-
-## Stack
-
-Next.js 15 (App Router) · React 19 · TypeScript · TailwindCSS v4 · Shadcn/UI ·
-Supabase (PostgreSQL · Auth · Storage · RLS).
+```
+readhub/
+├── apps/
+│   ├── web/          Aplicación Next.js 15 (la plataforma ReadHub)
+│   └── mcp/          Servidor MCP (Model Context Protocol) de ReadHub
+├── packages/
+│   ├── types/        (@readhub/types)    Tipos del dominio y de la BD
+│   ├── config/       (@readhub/config)   Constantes y lectura de env
+│   ├── database/     (@readhub/database) Cliente admin de Supabase + acceso a datos
+│   ├── ai/           (@readhub/ai)       Embeddings (Voyage), prompts y LLM (Claude)
+│   └── shared/       (@readhub/shared)   Servicios RAG (embedding, búsqueda, contexto, chat)
+├── skills/
+│   └── asistente-del-escritor/   Skill de Claude que usa el servidor MCP
+├── turbo.json        Orquestación (Turborepo)
+└── tsconfig.base.json
+```
 
 ## Requisitos
 
-- Node.js 18.18+ (probado con Node 24)
-- Una cuenta y un proyecto en [Supabase](https://supabase.com)
+- Node.js 18.18+ · npm 11+
+- Proyecto de Supabase (con pgvector) y claves de Voyage AI y Anthropic.
 
 ## Puesta en marcha
 
 ```bash
-# 1. Instalar dependencias
-npm install
+npm install                       # instala todo el workspace
+# Configura apps/web/.env.local (ver apps/web/.env.example)
 
-# 2. Configurar variables de entorno
-cp .env.example .env.local
-#   → completa NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
-#     SUPABASE_SERVICE_ROLE_KEY, SUPABASE_DB_URL y SUPABASE_PROJECT_REF
+npm run dev:web                   # web en http://localhost:3000
+npm run dev:mcp                   # servidor MCP (STDIO)
 
-# 3. Crear la base de datos en Supabase (migraciones + seed + validación RLS)
-npm run db:setup
-
-# 4. Arrancar en desarrollo
-npm run dev            # http://localhost:3000
+npm run build                     # build de todo el monorepo (turbo)
+npm run lint                      # lint
 ```
 
-## Scripts
+Scripts de base de datos (desde `apps/web`): `db:migrate`, `db:seed`, `db:test`,
+`db:setup`, `db:backfill`.
 
-| Script               | Descripción                                              |
-| -------------------- | -------------------------------------------------------- |
-| `npm run dev`        | Servidor de desarrollo                                   |
-| `npm run build`      | Build de producción                                      |
-| `npm run start`      | Servir el build                                          |
-| `npm run lint`       | ESLint                                                   |
-| `npm run db:migrate` | Aplica las migraciones SQL a la BD (`SUPABASE_DB_URL`)   |
-| `npm run db:seed`    | Carga los datos de prueba (`seed.sql`)                   |
-| `npm run db:test`    | Ejecuta la validación de políticas RLS (PASS/FAIL)       |
-| `npm run db:setup`   | `db:migrate` + `db:seed` + `db:test`                     |
-| `npm run db:push`    | Aplica migraciones vía CLI de Supabase (proyecto enlazado)|
-| `npm run gen:types`  | Regenera `types/database.ts` desde el esquema real       |
+## Documentación
 
-## Usuarios de prueba (seed)
-
-Contraseña para todos: `Password123!`
-
-| Email               | Rol    |
-| ------------------- | ------ |
-| `alice@readhub.dev` | writer |
-| `bob@readhub.dev`   | writer |
-| `admin@readhub.dev` | admin  |
-
-## Estructura y documentación
-
-La arquitectura, el modelo de datos, la integración con Supabase y las políticas
-RLS están documentadas en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
-
-Los archivos SQL viven en `supabase/`:
-
-- `migrations/` — fuente canónica (esquema, RLS, storage)
-- `schema.sql` / `policies.sql` — copias consolidadas de referencia
-- `seed.sql` — datos de prueba
-- `tests/rls_validation.sql` — validación de RLS
+- Web + RAG: [`apps/web/docs/ARCHITECTURE.md`](apps/web/docs/ARCHITECTURE.md)
+- Servidor MCP: [`apps/mcp/README.md`](apps/mcp/README.md)
+- Skill del escritor: [`skills/asistente-del-escritor/SKILL.md`](skills/asistente-del-escritor/SKILL.md)

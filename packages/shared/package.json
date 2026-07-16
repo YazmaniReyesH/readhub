@@ -1,0 +1,23 @@
+{
+  "name": "@readhub/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@readhub/ai": "*",
+    "@readhub/config": "*",
+    "@readhub/database": "*",
+    "@readhub/types": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}
