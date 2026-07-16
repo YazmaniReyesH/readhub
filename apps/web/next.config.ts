@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 // Host del proyecto de Supabase, derivado de la URL pública, para autorizar la
@@ -7,6 +8,9 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   : undefined;
 
 const nextConfig: NextConfig = {
+  // Raíz del monorepo: evita el warning de múltiples lockfiles y acota el
+  // rastreo de archivos a la raíz correcta.
+  outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
   // Paquetes compartidos del monorepo (TypeScript sin precompilar).
   transpilePackages: [
     "@readhub/types",

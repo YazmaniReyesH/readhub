@@ -12,7 +12,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -83,9 +82,9 @@ export function Navbar() {
               <span className="max-w-[8rem] truncate">{displayName}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="truncate">
+              <div className="truncate px-2 py-1.5 text-sm font-medium">
                 {displayName}
-              </DropdownMenuLabel>
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push("/profile")}>
                 <UserCircle className="h-4 w-4" />
