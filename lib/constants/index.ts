@@ -102,3 +102,43 @@ export function getSupabaseAnonKey(): string {
   }
   return key;
 }
+
+/** Devuelve la clave service_role (solo servidor). */
+export function getSupabaseServiceRoleKey(): string {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) {
+    throw new Error("Falta la variable de entorno SUPABASE_SERVICE_ROLE_KEY.");
+  }
+  return key;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  IA / RAG (Etapa 4) — solo servidor                                        */
+/* -------------------------------------------------------------------------- */
+
+/** Modelo de embeddings de Voyage AI y su dimensión (debe coincidir con la BD). */
+export const VOYAGE_EMBEDDING_MODEL =
+  process.env.VOYAGE_EMBEDDING_MODEL || "voyage-3.5";
+export const EMBEDDING_DIMENSIONS = 1024;
+
+/** Modelo de Claude para el asistente conversacional. */
+export const ANTHROPIC_CHAT_MODEL =
+  process.env.ANTHROPIC_CHAT_MODEL || "claude-opus-4-8";
+
+/** Parámetros del pipeline RAG. */
+export const RAG_TOP_K = 5; // nº máximo de documentos recuperados
+export const RAG_SIMILARITY_THRESHOLD = 0.2; // umbral mínimo de similitud (coseno)
+export const RAG_MAX_CONTEXT_CHARS = 8000; // límite del contexto enviado a Claude
+export const RAG_MAX_DOC_CHARS = 2500; // límite por documento dentro del contexto
+
+export function getVoyageKey(): string {
+  const key = process.env.VOYAGE_API_KEY;
+  if (!key) throw new Error("Falta la variable de entorno VOYAGE_API_KEY.");
+  return key;
+}
+
+export function getAnthropicKey(): string {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) throw new Error("Falta la variable de entorno ANTHROPIC_API_KEY.");
+  return key;
+}

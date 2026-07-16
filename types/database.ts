@@ -264,6 +264,34 @@ export interface Database {
           },
         ];
       };
+      article_embeddings: {
+        Row: {
+          article_id: string;
+          embedding: string;
+          content: string;
+          updated_at: string;
+        };
+        Insert: {
+          article_id: string;
+          embedding: string;
+          content: string;
+          updated_at?: string;
+        };
+        Update: {
+          article_id?: string;
+          embedding?: string;
+          content?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "article_embeddings_article_id_fkey";
+            columns: ["article_id"];
+            referencedRelation: "articles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -272,6 +300,21 @@ export interface Database {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      match_articles: {
+        Args: {
+          query_embedding: string;
+          match_count?: number;
+          similarity_threshold?: number;
+        };
+        Returns: {
+          article_id: string;
+          title: string;
+          summary: string | null;
+          content: string;
+          author_name: string | null;
+          similarity: number;
+        }[];
       };
       get_articles_feed: {
         Args: Record<string, never>;

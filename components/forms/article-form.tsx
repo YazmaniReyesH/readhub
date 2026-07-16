@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateArticle } from "@/hooks/useArticles";
 import { useUpload } from "@/hooks/useUpload";
+import { requestArticleIndex } from "@/services/article.service";
 import {
   validateDocument,
   validateImage,
@@ -61,13 +62,15 @@ export function ArticleForm() {
         document!,
         image!,
       );
-      await createArticle({
+      const id = await createArticle({
         authorId: user.id,
         title: title.trim(),
         summary,
         documentPath,
         imagePath,
       });
+      // Indexación automática para el sistema RAG (no bloquea la publicación).
+      void requestArticleIndex(id);
       toast.success("Artículo publicado correctamente.");
       router.replace("/");
       router.refresh();

@@ -58,9 +58,12 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
+  // Las rutas de API gestionan su propia autenticación (responden 401),
+  // no deben redirigirse a /login.
+  const isApiRoute = pathname.startsWith("/api");
 
   // Sin sesión y ruta protegida → login.
-  if (!user && !isPublicRoute) {
+  if (!user && !isPublicRoute && !isApiRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

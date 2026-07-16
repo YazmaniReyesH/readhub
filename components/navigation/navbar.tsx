@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Home, LogOut, PenSquare, User } from "lucide-react";
+import { Bot, Home, LogOut, PenSquare, User } from "lucide-react";
 import { toast } from "sonner";
 
 import { Brand } from "@/components/layout/brand";
@@ -54,6 +54,16 @@ export function Navbar() {
             Inicio
           </Link>
           <Link
+            href="/assistant"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "hidden sm:inline-flex",
+            )}
+          >
+            <Bot className="h-4 w-4" />
+            Asistente
+          </Link>
+          <Link
             href="/upload"
             className={cn(
               buttonVariants({ variant: "default", size: "sm" }),
@@ -81,6 +91,13 @@ export function Navbar() {
               <DropdownMenuItem render={<Link href="/" />} className="sm:hidden">
                 <Home className="h-4 w-4" />
                 Inicio
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                render={<Link href="/assistant" />}
+                className="sm:hidden"
+              >
+                <Bot className="h-4 w-4" />
+                Asistente
               </DropdownMenuItem>
               <DropdownMenuItem
                 render={<Link href="/upload" />}

@@ -5,9 +5,15 @@ registran, publican artículos (documento + imagen de portada) y consumen el
 contenido de otros con vistas, likes y comentarios.
 
 Este repositorio evoluciona a lo largo de toda la especialización. **Estado
-actual: Etapa 3 — MVP funcional** (autenticación, listado, publicación con
-subida de archivos, detalle con vistas/likes/comentarios) sobre la
-infraestructura de la Etapa 2.
+actual: Etapa 4 — Sistema RAG** (asistente conversacional + búsqueda semántica)
+sobre el MVP de la Etapa 3 y la infraestructura de la Etapa 2.
+
+## Stack de IA (Etapa 4)
+
+pgvector (Supabase) para la base vectorial · **Voyage AI** (`voyage-3.5`, 1024
+dim) para embeddings · **Claude** (`claude-opus-4-8`) para la generación. Flujo
+RAG: indexación automática al publicar → búsqueda semántica → construcción de
+contexto → respuesta fundamentada con citación de fuentes.
 
 ## Flujo del MVP
 

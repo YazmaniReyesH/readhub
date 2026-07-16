@@ -263,7 +263,49 @@ Componentes (UI)  →  Custom Hooks (lógica)  →  Services (acceso a Supabase)
 Estas funciones resuelven la necesidad de mostrar el nº de visualizaciones y el
 autor sin abrir las tablas `views` ni `profiles` (que siguen protegidas).
 
-## 9. Estrategia de escalabilidad
+## 9. Sistema RAG (Etapa 4 — asistente conversacional)
+
+Convierte ReadHub en una plataforma de conocimiento conversacional mediante un
+pipeline RAG desacoplado, sobre la misma arquitectura por capas.
+
+```
+UI (chat/búsqueda) → Hooks → Route Handlers (/api/*) → Services → Supabase/IA
+```
+
+**Proveedores:** embeddings con **Voyage AI** (`voyage-3.5`, 1024 dim) y
+generación con **Claude** (`claude-opus-4-8`). Ambas llaves viven solo en el
+servidor; ningún componente React habla con la IA directamente.
+
+**Infraestructura vectorial** (migraciones 0006 y 0007):
+- Extensión `pgvector` + tabla `article_embeddings` (1:1 con `articles`,
+  `vector(1024)` + `content`), índice **HNSW** (`vector_cosine_ops`).
+- Función `match_articles(query_embedding, match_count, similarity_threshold)`
+  `SECURITY DEFINER`: recupera los artículos **públicos** más similares.
+
+**Pipeline de indexación** (automático): al publicar un artículo, el formulario
+llama a `POST /api/index`, que genera el embedding (`embedding.service`) y lo
+guarda (upsert) en la base vectorial. Backfill inicial: `npm run db:backfill`.
+
+**Pipeline de consulta (RAG):**
+1. `vector-search.service` → embebe la consulta (`input_type: query`) y llama a
+   `match_articles` (usa el índice HNSW).
+2. `context-builder.service` → selecciona por relevancia, limita el tamaño y
+   arma el prompt + las fuentes.
+3. `chat.service` → orquesta y llama a Claude en **streaming**; el prompt obliga
+   a responder solo con el contexto (anti-alucinación). Sin contexto suficiente,
+   responde con un mensaje explícito en lugar de inventar.
+
+**Route Handlers:** `/api/chat` (streaming de texto + fuentes en la cabecera
+`X-Sources`), `/api/search` (JSON de resultados), `/api/index` (indexar/borrar,
+solo autor o admin). Todos requieren sesión (401 si no).
+
+**UI:** página `/assistant` con pestañas Chat y Búsqueda semántica; el chat
+muestra fuentes citadas con enlaces al artículo original y streaming progresivo.
+
+> **Nota — plan gratuito de Voyage AI:** sin método de pago el límite es de 3
+> req/min. Suficiente para la demo; para uso intensivo, añadir método de pago.
+
+## 10. Estrategia de escalabilidad
 
 - **Arquitectura modular** por responsabilidad (UI / hooks / services / lib /
   types) que no se reestructura entre sesiones, solo se amplía.

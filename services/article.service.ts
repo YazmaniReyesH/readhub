@@ -35,6 +35,24 @@ export interface CreateArticleInput {
   imagePath: string;
 }
 
+/**
+ * Solicita al backend la indexación (embedding) de un artículo. Se invoca tras
+ * publicar para mantener la base vectorial sincronizada automáticamente.
+ * No lanza: un fallo de indexación no debe impedir la publicación.
+ */
+export async function requestArticleIndex(articleId: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/index", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ articleId }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /** Inserta un artículo y devuelve su id. */
 export async function createArticle(
   input: CreateArticleInput,
