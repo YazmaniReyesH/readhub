@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Bot, Home, LogOut, PenSquare, User } from "lucide-react";
+import { Bot, Home, LogOut, PenSquare, User, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Brand } from "@/components/layout/brand";
@@ -87,26 +87,33 @@ export function Navbar() {
                 {displayName}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/profile")}>
+                <UserCircle className="h-4 w-4" />
+                Mi perfil
+              </DropdownMenuItem>
               {/* Enlaces también en el menú (útil en móvil) */}
-              <DropdownMenuItem render={<Link href="/" />} className="sm:hidden">
+              <DropdownMenuItem
+                className="sm:hidden"
+                onClick={() => router.push("/")}
+              >
                 <Home className="h-4 w-4" />
                 Inicio
               </DropdownMenuItem>
               <DropdownMenuItem
-                render={<Link href="/assistant" />}
                 className="sm:hidden"
+                onClick={() => router.push("/assistant")}
               >
                 <Bot className="h-4 w-4" />
                 Asistente
               </DropdownMenuItem>
               <DropdownMenuItem
-                render={<Link href="/upload" />}
                 className="sm:hidden"
+                onClick={() => router.push("/upload")}
               >
                 <PenSquare className="h-4 w-4" />
                 Cargar artículo
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="sm:hidden" />
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
                 disabled={signingOut}
