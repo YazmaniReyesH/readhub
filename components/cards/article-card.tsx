@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Eye, Heart, MessageCircle } from "lucide-react";
 
+import { CoverImage } from "@/components/articles/cover-image";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { getCoverPublicUrl } from "@/services/storage.service";
 import type { ArticleWithStats } from "@/types/database";
@@ -17,19 +17,12 @@ export function ArticleCard({ article }: { article: ArticleWithStats }) {
     <Link href={`/article/${article.id}`} className="group block">
       <Card className="h-full overflow-hidden pt-0 transition-shadow hover:shadow-md">
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-          {coverUrl ? (
-            <Image
-              src={coverUrl}
-              alt={article.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 400px"
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              Sin imagen
-            </div>
-          )}
+          <CoverImage
+            src={coverUrl}
+            alt={article.title}
+            sizes="(max-width: 768px) 100vw, 400px"
+            className="transition-transform duration-300 group-hover:scale-105"
+          />
         </div>
 
         <CardContent className="space-y-2">

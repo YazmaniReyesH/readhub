@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Eye } from "lucide-react";
 
 import { ArticleContent } from "@/components/articles/article-content";
+import { CoverImage } from "@/components/articles/cover-image";
 import { LikeButton } from "@/components/articles/like-button";
 import { CommentForm } from "@/components/comments/comment-form";
 import { CommentList } from "@/components/comments/comment-list";
@@ -88,14 +88,12 @@ export default function ArticlePage() {
         </div>
       </header>
 
-      {coverUrl ? (
+      {article.image_path ? (
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted">
-          <Image
+          <CoverImage
             src={coverUrl}
             alt={article.title}
-            fill
             sizes="(max-width: 768px) 100vw, 768px"
-            className="object-cover"
             priority
           />
         </div>

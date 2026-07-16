@@ -42,9 +42,13 @@ export async function uploadCover(userId: string, file: File): Promise<string> {
 export function getCoverPublicUrl(path: string | null): string | null {
   if (!path) return null;
   const supabase = createClient();
+  // Defensivo: si la ruta ya incluye el nombre del bucket como prefijo, se
+  // elimina para no duplicarlo en la URL pública.
+  const prefix = `${STORAGE_BUCKETS.covers}/`;
+  const normalized = path.startsWith(prefix) ? path.slice(prefix.length) : path;
   const { data } = supabase.storage
     .from(STORAGE_BUCKETS.covers)
-    .getPublicUrl(path);
+    .getPublicUrl(normalized);
   return data.publicUrl;
 }
 
