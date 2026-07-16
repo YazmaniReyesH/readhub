@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { ArticleWithStats } from "@readhub/types";
+import type { ArticleWithStats, TablesUpdate } from "@readhub/types";
 
 /**
  * Capa de acceso a los artículos y sus interacciones (vistas y likes).
@@ -33,6 +33,15 @@ export interface CreateArticleInput {
   summary: string | null;
   documentPath: string;
   imagePath: string;
+  isPublic: boolean;
+}
+
+export interface UpdateArticleInput {
+  title?: string;
+  isPublic?: boolean;
+  documentPath?: string;
+  imagePath?: string;
+  summary?: string;
 }
 
 /**
@@ -66,12 +75,32 @@ export async function createArticle(
       summary: input.summary,
       document_path: input.documentPath,
       image_path: input.imagePath,
-      is_public: true,
+      is_public: input.isPublic,
     })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
   return data.id;
+}
+
+/**
+ * Actualiza un artículo (título, visibilidad y, opcionalmente, documento/imagen).
+ * La RLS solo permite la edición al autor (o admin).
+ */
+export async function updateArticle(
+  id: string,
+  input: UpdateArticleInput,
+): Promise<void> {
+  const supabase = createClient();
+  const patch: TablesUpdate<"articles"> = {};
+  if (input.title !== undefined) patch.title = input.title;
+  if (input.isPublic !== undefined) patch.is_public = input.isPublic;
+  if (input.documentPath !== undefined) patch.document_path = input.documentPath;
+  if (input.imagePath !== undefined) patch.image_path = input.imagePath;
+  if (input.summary !== undefined) patch.summary = input.summary;
+
+  const { error } = await supabase.from("articles").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 /** Registra una visualización del artículo (BR-011). */

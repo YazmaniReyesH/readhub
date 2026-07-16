@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Eye } from "lucide-react";
+import { ArrowLeft, Eye, Lock, Pencil } from "lucide-react";
 
 import { ArticleContent } from "@/components/articles/article-content";
 import { CoverImage } from "@/components/articles/cover-image";
@@ -14,6 +14,7 @@ import {
   ErrorState,
   LoadingState,
 } from "@/components/layout/states";
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,7 +26,7 @@ import { cn, formatDate, formatNumber } from "@/lib/utils";
 export default function ArticlePage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const { article, loading, error, refresh } = useArticle(id, user?.id ?? null);
   const {
@@ -58,20 +59,45 @@ export default function ArticlePage() {
     await addComment(user.id, text);
   }
 
+  const canEdit =
+    user && (article.author_id === user.id || profile?.role === "admin");
+
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-      <Link
-        href="/"
-        className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "-ml-2")}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Volver al inicio
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "-ml-2",
+          )}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver al inicio
+        </Link>
+        {canEdit ? (
+          <Link
+            href={`/article/${id}/edit`}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            <Pencil className="h-4 w-4" />
+            Editar
+          </Link>
+        ) : null}
+      </div>
 
       <header className="space-y-4">
-        <h1 className="text-3xl font-bold leading-tight tracking-tight">
-          {article.title}
-        </h1>
+        <div className="flex items-start gap-3">
+          <h1 className="flex-1 text-3xl font-bold leading-tight tracking-tight">
+            {article.title}
+          </h1>
+          {!article.is_public ? (
+            <Badge variant="secondary" className="mt-1 shrink-0">
+              <Lock className="h-3.5 w-3.5" />
+              Privado
+            </Badge>
+          ) : null}
+        </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           <span className="font-medium text-foreground">
             {article.author_name ?? "Autor"}

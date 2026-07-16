@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCreateArticle } from "@/hooks/useArticles";
 import { useUpload } from "@/hooks/useUpload";
 import { requestArticleIndex } from "@/services/article.service";
+import { VisibilityField } from "@/components/forms/visibility-field";
 import {
   validateDocument,
   validateImage,
@@ -33,6 +34,7 @@ export function ArticleForm() {
   const [title, setTitle] = useState("");
   const [document, setDocument] = useState<File | null>(null);
   const [image, setImage] = useState<File | null>(null);
+  const [isPublic, setIsPublic] = useState(true);
   const [errors, setErrors] = useState<Errors>({});
 
   const busy = uploading || submitting;
@@ -68,6 +70,7 @@ export function ArticleForm() {
         summary,
         documentPath,
         imagePath,
+        isPublic,
       });
       // Indexación automática para el sistema RAG (no bloquea la publicación).
       void requestArticleIndex(id);
@@ -137,6 +140,8 @@ export function ArticleForm() {
           <p className="text-xs text-destructive">{errors.image}</p>
         ) : null}
       </div>
+
+      <VisibilityField value={isPublic} onChange={setIsPublic} disabled={busy} />
 
       <div className="flex gap-3">
         <Button type="submit" size="lg" disabled={busy}>

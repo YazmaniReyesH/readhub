@@ -1,7 +1,11 @@
 
 import { createAdminClient } from "@readhub/database";
 import { embedText } from "@readhub/ai";
-import { STORAGE_BUCKETS } from "@readhub/config";
+import {
+  DOCUMENT_SUMMARY_PLACEHOLDER,
+  STORAGE_BUCKETS,
+  deriveSummary,
+} from "@readhub/config";
 import type { IndexResult } from "@readhub/types";
 
 /**
@@ -16,27 +20,6 @@ function normalizeDocPath(path: string): string {
   return path.startsWith(prefix) ? path.slice(prefix.length) : path;
 }
 
-/**
- * Construye el texto que se vectoriza a partir del artículo.
- * Estrategia: título + resumen + (contenido del documento si es TXT). Se prioriza
- * la información más representativa para maximizar la calidad de la búsqueda
- * semántica. Para PDF/DOCX (sin extracción nativa en esta fase) se usa el resumen.
- */
-async function buildArticleText(article: {
-  title: string;
-  summary: string | null;
-  document_path: string | null;
-}): Promise<string> {
-  const parts: string[] = [article.title];
-  if (article.summary) parts.push(article.summary);
-
-  const path = article.document_path;
-  if (path) {
-    const docText = await extractDocumentText(normalizeDocPath(path));
-    if (docText) parts.push(docText.slice(0, 6000));
-  }
-  return parts.join("\n\n");
-}
 
 /**
  * Descarga un documento de Storage y extrae su texto.
@@ -84,7 +67,15 @@ export async function indexArticle(articleId: string): Promise<IndexResult> {
   if (error) throw new Error(error.message);
   if (!article) throw new Error(`El artículo ${articleId} no existe.`);
 
-  const content = await buildArticleText(article);
+  // Extrae el texto del documento (TXT/PDF) una sola vez.
+  const docText = article.document_path
+    ? await extractDocumentText(normalizeDocPath(article.document_path))
+    : "";
+
+  // Texto a vectorizar: título + resumen + contenido del documento.
+  const content = [article.title, article.summary, docText.slice(0, 6000)]
+    .filter(Boolean)
+    .join("\n\n");
   const embedding = await embedText(content);
 
   const { error: upsertError } = await admin.from("article_embeddings").upsert(
@@ -97,6 +88,19 @@ export async function indexArticle(articleId: string): Promise<IndexResult> {
     { onConflict: "article_id" },
   );
   if (upsertError) throw new Error(upsertError.message);
+
+  // Deriva el resumen desde el texto del documento si aún es provisional o vacío.
+  if (docText) {
+    const needsSummary =
+      !article.summary || article.summary === DOCUMENT_SUMMARY_PLACEHOLDER;
+    const derived = deriveSummary(docText);
+    if (needsSummary && derived) {
+      await admin
+        .from("articles")
+        .update({ summary: derived })
+        .eq("id", article.id);
+    }
+  }
 
   return { articleId: article.id, dimensions: embedding.length };
 }

@@ -4,24 +4,24 @@ import { useCallback, useState } from "react";
 
 import * as storageService from "@/services/storage.service";
 import { getFileExtension } from "@/lib/validators/article";
+import { DOCUMENT_SUMMARY_PLACEHOLDER, deriveSummary } from "@readhub/config";
 
-/** Extrae un resumen a partir del documento (BR-010). */
-async function deriveSummary(document: File): Promise<string> {
+/**
+ * Resumen provisional a partir del documento (BR-010).
+ * Para TXT extrae el primer párrafo en el cliente. Para PDF/DOCX usa un
+ * placeholder; el resumen real se deriva en el servidor durante la indexación
+ * (que sí extrae el texto del PDF).
+ */
+async function deriveDocumentSummary(document: File): Promise<string> {
   const ext = getFileExtension(document.name);
   if (ext === "txt") {
     try {
-      const text = await document.text();
-      const firstParagraph =
-        text
-          .split(/\n\s*\n/)
-          .map((p) => p.trim())
-          .find((p) => p.length > 0) ?? text.trim();
-      return firstParagraph.slice(0, 300);
+      return deriveSummary(await document.text());
     } catch {
       // Si no se puede leer, usa el respaldo.
     }
   }
-  return "Documento disponible. Ábrelo para leer el contenido completo.";
+  return DOCUMENT_SUMMARY_PLACEHOLDER;
 }
 
 export interface UploadedArticleFiles {
@@ -45,7 +45,7 @@ export function useUpload() {
     ): Promise<UploadedArticleFiles> => {
       setUploading(true);
       try {
-        const summary = await deriveSummary(document);
+        const summary = await deriveDocumentSummary(document);
         const documentPath = await storageService.uploadDocument(
           userId,
           document,

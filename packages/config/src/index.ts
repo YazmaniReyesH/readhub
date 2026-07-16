@@ -61,6 +61,27 @@ export const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
 export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 /* -------------------------------------------------------------------------- */
+/*  Resumen del artículo (BR-010)                                             */
+/* -------------------------------------------------------------------------- */
+
+/** Resumen provisional cuando aún no se ha extraído texto del documento. */
+export const DOCUMENT_SUMMARY_PLACEHOLDER =
+  "Documento disponible. Ábrelo para leer el contenido completo.";
+
+/**
+ * Deriva un resumen a partir de un texto: toma el primer párrafo no vacío y lo
+ * recorta. Reutilizado en el cliente (TXT) y en el servidor (PDF).
+ */
+export function deriveSummary(text: string, maxLen = 300): string {
+  const firstParagraph =
+    text
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .find((p) => p.length > 0) ?? text.trim();
+  return firstParagraph.replace(/\s+/g, " ").slice(0, maxLen).trim();
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Variables de entorno                                                      */
 /* -------------------------------------------------------------------------- */
 
