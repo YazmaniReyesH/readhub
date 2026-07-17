@@ -48,8 +48,14 @@ export default function HomePage() {
         />
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {articles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
+          {articles.map((article, index) => (
+            // Precarga la imagen LCP: las primeras 3 tarjetas (fila superior en
+            // escritorio) suelen estar above-the-fold.
+            <ArticleCard
+              key={article.id}
+              article={article}
+              priority={index < 3}
+            />
           ))}
         </div>
       )}

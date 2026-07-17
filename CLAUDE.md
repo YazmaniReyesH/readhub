@@ -90,8 +90,12 @@ npm run test:e2e              # Playwright (apps/web/e2e)
   prueban componentes puramente visuales.
 - **Playwright** (E2E): flujos de usuario (autenticación) en `apps/web/e2e` con
   patrón Page Object. En CI corre contra un Supabase **local** efímero.
-- **CI**: `.github/workflows/ci.yml` (GitHub Actions) — type-check + lint + Vitest,
-  y E2E con Playwright. No despliega. No requiere secretos.
+- **CI/CD**: `.github/workflows/ci.yml` (GitHub Actions), en cadena:
+  `checks` (type-check + lint + Vitest) → `e2e` (Playwright) → `performance`
+  (build + gate de bundle + Lighthouse/CWV) → `deploy` (Vercel: producción en
+  push a `main`, preview en PR). Las validaciones no requieren secretos; solo el
+  deploy usa secretos de Vercel y se omite si faltan. Ver `docs/PERFORMANCE.md` y
+  `docs/DEPLOYMENT.md`.
 
 ## Notas
 
