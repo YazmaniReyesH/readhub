@@ -27,7 +27,11 @@ darle a GitHub 3 secretos.
 2. **Import Git Repository** → elige `readhub`.
 3. **⚠️ CLAVE (monorepo):** en **Root Directory** pulsa *Edit* y selecciona
    **`apps/web`**. (Si no lo haces, Vercel intentará construir la raíz del
-   monorepo y fallará.)
+   monorepo y fallará.) Asegúrate de que quede activado **"Include source files
+   outside of the Root Directory in the Build Step"** (Vercel lo enciende solo al
+   detectar el monorepo) para que resuelva los paquetes `@readhub/*` (npm
+   workspaces). El pipeline usa **build remoto** en Vercel, que respeta estos
+   ajustes.
 4. **Framework Preset:** debe autodetectar **Next.js**. Déjalo así.
 5. **NO** pulses *Deploy* todavía: primero añade las variables de entorno
    (Paso 2). Si ya desplegó, no pasa nada; lo corregimos igual.
@@ -142,3 +146,6 @@ secret**. Crea exactamente estos tres (los nombres deben coincidir):
   entorno correspondiente (Production/Preview).
 - **Se despliega sin pasar el gate:** no desactivaste la auto-deploy de Git
   (Paso 3).
+- **`Cannot find module '@readhub/...'` en el build de Vercel:** falta activar
+  **"Include source files outside of the Root Directory in the Build Step"** en
+  *Settings → General* (necesario para resolver los workspaces del monorepo).

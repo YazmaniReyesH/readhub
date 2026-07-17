@@ -325,24 +325,15 @@ jobs:
         if: steps.check.outputs.configured == 'true'
         run: npm install -g vercel@latest
 
-      # production en push a main/master; preview en el resto (Pull Requests).
-      - name: Descargar configuración del proyecto (vercel pull)
-        if: steps.check.outputs.configured == 'true'
-        run: |
-          ENV=${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && 'production' || 'preview' }}
-          vercel pull --yes --environment=$ENV --token="$VERCEL_TOKEN"
-
-      - name: Construir en Vercel (vercel build)
+      # Se despliega con build REMOTO en Vercel (no `vercel build --prebuilt`):
+      # el pipeline de Vercel resuelve correctamente el monorepo (npm workspaces
+      # + Root Directory = apps/web) y usa las variables de entorno del proyecto.
+      # production en push a main/master; preview en Pull Requests.
+      - name: Desplegar a Vercel
         if: steps.check.outputs.configured == 'true'
         run: |
           FLAG=${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && '--prod' || '' }}
-          vercel build $FLAG --token="$VERCEL_TOKEN"
-
-      - name: Desplegar a Vercel (prebuilt)
-        if: steps.check.outputs.configured == 'true'
-        run: |
-          FLAG=${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && '--prod' || '' }}
-          URL=$(vercel deploy --prebuilt $FLAG --token="$VERCEL_TOKEN")
+          URL=$(vercel deploy $FLAG --yes --token="$VERCEL_TOKEN")
           echo "Desplegado en: $URL"
           echo "### 🚀 Despliegue Vercel" >> "$GITHUB_STEP_SUMMARY"
           echo "$URL" >> "$GITHUB_STEP_SUMMARY"
