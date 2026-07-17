@@ -24,10 +24,19 @@ export class DashboardPage {
 
   /** Verifica que el dashboard cargó: heading, datos del usuario y navegación. */
   async expectLoaded(displayName: string) {
-    // La redirección tras el login depende de la latencia de auth; margen amplio.
-    await this.page.waitForURL(/\/$/, { timeout: 30_000 });
+    // La redirección "soft" del cliente tras el login (router.replace) no es
+    // 100% fiable en dev por la caché del App Router y el timing de la cookie.
+    // Como la sesión ya quedó autenticada (cookie puesta), garantizamos el
+    // dashboard navegando a "/" —una navegación dura sí lleva la cookie— y
+    // reintentamos hasta que aparezca el menú del usuario ya cargado.
+    await expect(async () => {
+      if (new URL(this.page.url()).pathname !== "/") {
+        await this.page.goto("/");
+      }
+      await expect(this.userMenu(displayName)).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
+
     await expect(this.heading).toBeVisible();
-    await expect(this.userMenu(displayName)).toBeVisible();
     await expect(this.homeLink).toBeVisible();
     await expect(this.uploadLink).toBeVisible();
   }

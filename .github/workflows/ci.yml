@@ -91,13 +91,15 @@ jobs:
           if-no-files-found: ignore
 
   # E2E con Playwright, contra un stack de Supabase LOCAL y efímero
-  # (levantado y sembrado dentro del propio runner vía Supabase CLI +
-  # Docker, ya preinstalado en los runners ubuntu-latest de GitHub). Así el
-  # login real de e2e/tests/auth.spec.ts tiene un usuario sembrado con el
-  # que autenticarse sin necesitar ningún secreto: las claves que arroja
-  # `supabase status` para este stack son las mismas para cualquier
-  # instancia local de Supabase en cualquier máquina, y el stack completo
-  # se destruye con el runner al terminar el job.
+  # (levantado dentro del propio runner vía Supabase CLI + Docker, ya
+  # preinstalado en los runners ubuntu-latest de GitHub). El usuario con el
+  # que autentica e2e/tests/auth.spec.ts lo crea el global-setup de Playwright
+  # vía Admin API (usando la SERVICE_ROLE_KEY del stack local), no el seed:
+  # insertar filas en auth.users a mano no produce un usuario que GoTrue
+  # acepte en signInWithPassword de forma fiable. No se necesita ningún
+  # secreto: las claves que arroja `supabase status` para este stack son las
+  # mismas para cualquier instancia local de Supabase en cualquier máquina, y
+  # el stack completo se destruye con el runner al terminar el job.
   e2e:
     name: End-to-end (Playwright)
     runs-on: ubuntu-latest

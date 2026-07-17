@@ -1,11 +1,15 @@
-/** Datos de prueba (usuario sembrado por supabase/seed.sql). */
+/**
+ * Usuario de prueba de E2E. Lo crea/reafirma `e2e/global-setup.ts` vía Admin API
+ * antes de cada corrida (no depende del seed manual, que no autentica de forma
+ * fiable en GoTrue local).
+ */
 export const seededUser = {
-  email: "alice@readhub.dev",
+  email: "e2e@readhub.dev",
   password: "Password123!",
-  displayName: "Alice Autora",
+  displayName: "Usuario E2E",
 };
 
 export const invalidCredentials = {
-  email: "alice@readhub.dev",
+  email: seededUser.email,
   password: "ContraseñaIncorrecta999",
 };
