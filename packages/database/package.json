@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@readhub/config": "*",

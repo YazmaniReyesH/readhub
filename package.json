@@ -11,13 +11,17 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "test:e2e": "npm run test:e2e --workspace @readhub/web",
     "dev:web": "npm run dev --workspace @readhub/web",
     "build:web": "npm run build --workspace @readhub/web",
     "dev:mcp": "npm run dev --workspace @readhub/mcp",
     "build:mcp": "npm run build --workspace @readhub/mcp"
   },
   "devDependencies": {
-    "turbo": "^2.5.0"
+    "@vitest/coverage-v8": "^4.1.10",
+    "turbo": "^2.5.0",
+    "vitest": "^4.1.10"
   }
 }

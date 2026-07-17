@@ -41,7 +41,7 @@ values
     crypt('Password123!', gen_salt('bf')),
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
-    '{"birth_date":"1995-04-12","phone":"3001112233","role":"writer"}',
+    '{"full_name":"Alice Autora","birth_date":"1995-04-12","phone":"3001112233","role":"writer"}',
     '', '', '', ''
   ),
   (
@@ -51,7 +51,7 @@ values
     crypt('Password123!', gen_salt('bf')),
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
-    '{"birth_date":"1990-09-30","phone":"3004445566","role":"writer"}',
+    '{"full_name":"Bob Escritor","birth_date":"1990-09-30","phone":"3004445566","role":"writer"}',
     '', '', '', ''
   ),
   (
@@ -61,7 +61,7 @@ values
     crypt('Password123!', gen_salt('bf')),
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
-    '{"birth_date":"1988-01-20","phone":"3007778899","role":"admin"}',
+    '{"full_name":"Admin ReadHub","birth_date":"1988-01-20","phone":"3007778899","role":"admin"}',
     '', '', '', ''
   )
 on conflict do nothing;
@@ -96,15 +96,16 @@ on conflict do nothing;
 
 -- Garantiza que los perfiles existan y tengan el rol correcto aunque el trigger
 -- no se hubiera ejecutado (p. ej. si los usuarios ya existían).
-insert into public.profiles (id, birth_date, phone, role)
+insert into public.profiles (id, birth_date, phone, role, full_name)
 values
-  ('11111111-1111-1111-1111-111111111111', '1995-04-12', '3001112233', 'writer'),
-  ('22222222-2222-2222-2222-222222222222', '1990-09-30', '3004445566', 'writer'),
-  ('33333333-3333-3333-3333-333333333333', '1988-01-20', '3007778899', 'admin')
+  ('11111111-1111-1111-1111-111111111111', '1995-04-12', '3001112233', 'writer', 'Alice Autora'),
+  ('22222222-2222-2222-2222-222222222222', '1990-09-30', '3004445566', 'writer', 'Bob Escritor'),
+  ('33333333-3333-3333-3333-333333333333', '1988-01-20', '3007778899', 'admin', 'Admin ReadHub')
 on conflict (id) do update
   set role = excluded.role,
       birth_date = excluded.birth_date,
-      phone = excluded.phone;
+      phone = excluded.phone,
+      full_name = excluded.full_name;
 
 -- -----------------------------------------------------------------------------
 -- 2) Artículos
