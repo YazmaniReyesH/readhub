@@ -39,3 +39,6 @@ supabase/.branches/
 # Logs / OS
 *.log
 .DS_Store
+
+.vercel
+.env*
