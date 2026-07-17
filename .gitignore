@@ -25,6 +25,13 @@ playwright-report/
 test-results/
 .playwright/
 
+# Rendimiento (reportes locales de Lighthouse CI / bundle)
+.lighthouseci/
+lighthouse-report/
+
+# Vercel (config local del enlace de proyecto: contiene orgId/projectId)
+.vercel/
+
 # Supabase local (CLI)
 supabase/.temp/
 supabase/.branches/
@@ -32,3 +39,6 @@ supabase/.branches/
 # Logs / OS
 *.log
 .DS_Store
+
+.vercel
+.env*

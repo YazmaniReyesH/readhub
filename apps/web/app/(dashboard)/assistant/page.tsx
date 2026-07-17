@@ -1,11 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { MessageSquare, Search } from "lucide-react";
 
-import { ChatWindow } from "@/components/chat/ChatWindow";
-import { SemanticSearch } from "@/components/search/SemanticSearch";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Code-splitting: cada panel del asistente se carga solo cuando su pestaña se
+// activa, en vez de incluir ambos en el JS inicial de la ruta. Son componentes
+// de cliente (estado/streaming), por eso ssr: false.
+const PanelSkeleton = () => <Skeleton className="h-[70vh] w-full rounded-xl" />;
+
+const ChatWindow = dynamic(
+  () => import("@/components/chat/ChatWindow").then((m) => m.ChatWindow),
+  { ssr: false, loading: PanelSkeleton },
+);
+const SemanticSearch = dynamic(
+  () => import("@/components/search/SemanticSearch").then((m) => m.SemanticSearch),
+  { ssr: false, loading: PanelSkeleton },
+);
 
 type Tab = "chat" | "search";
 

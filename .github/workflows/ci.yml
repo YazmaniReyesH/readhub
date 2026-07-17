@@ -189,3 +189,151 @@ jobs:
       - name: Detener Supabase local
         if: always()
         run: supabase stop
+
+  # ===========================================================================
+  # Rendimiento: se ejecuta SOLO si checks y e2e pasaron. Construye el build de
+  # producción, verifica el presupuesto de bundle y audita Core Web Vitals con
+  # Lighthouse. Si el score de performance/accessibility (o el bundle) no cumple
+  # los umbrales, este job FALLA y, como `deploy` depende de él, se bloquea el
+  # despliegue. No repite type-check/lint/vitest/playwright (ya cubiertos).
+  # No requiere secretos: audita páginas públicas con un build local.
+  # ===========================================================================
+  performance:
+    name: Rendimiento (build + bundle + Lighthouse)
+    runs-on: ubuntu-latest
+    needs: [checks, e2e]
+    timeout-minutes: 20
+    # Variables públicas de placeholder: el build necesita una URL válida para
+    # derivar el host de imágenes; auditamos /login y /register (públicas) que no
+    # consumen datos, así que no hacen falta credenciales reales ni Supabase.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-placeholder
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      BUNDLE_BUDGET_KB: "300"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Restaurar caché de Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Fijar la versión de npm (coincide con packageManager)
+        run: npm install -g npm@${{ env.NPM_VERSION }}
+
+      - name: Instalar dependencias (npm workspaces)
+        run: npm ci
+
+      # Genera el Production Build y captura su salida (tabla "First Load JS")
+      # para el reporte/gate de bundle. pipefail asegura que un fallo del build
+      # (no de tee) marque el paso como fallido.
+      - name: Generar Production Build
+        working-directory: apps/web
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee "$RUNNER_TEMP/build-output.txt"
+
+      # Gate de bundle: falla si la ruta más pesada supera BUNDLE_BUDGET_KB.
+      - name: Analizar tamaño del bundle (gate + reporte)
+        working-directory: apps/web
+        run: node scripts/bundle-report.mjs "$RUNNER_TEMP/build-output.txt" "$RUNNER_TEMP/bundle-report.md"
+
+      # Levanta el build de producción y audita Core Web Vitals con Lighthouse
+      # CI. Las aserciones (lighthouserc.json) fallan el paso si performance o
+      # accessibility caen por debajo de 0.90 (o CLS > 0.1).
+      - name: Auditoría de Core Web Vitals (Lighthouse) — gate
+        working-directory: apps/web
+        run: |
+          set -o pipefail
+          npm run start &
+          SERVER_PID=$!
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:3000/login >/dev/null 2>&1 && break
+            sleep 1
+          done
+          npx @lhci/cli@0.15.1 autorun
+          STATUS=$?
+          kill "$SERVER_PID" 2>/dev/null || true
+          exit $STATUS
+
+      # Reporte de rendimiento como artefacto (bundle + Lighthouse), incluso si
+      # el gate falló, para poder inspeccionar los números.
+      - name: Publicar reporte de rendimiento (artefacto)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: |
+            ${{ runner.temp }}/bundle-report.md
+            ${{ runner.temp }}/build-output.txt
+            apps/web/lighthouse-report
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # ===========================================================================
+  # Despliegue a Vercel: SOLO tras aprobar checks + e2e + performance. Despliega
+  # a producción en push a main y crea un preview en Pull Requests. Si aún no se
+  # configuraron los secretos de Vercel, el job NO falla: detecta su ausencia y
+  # omite el despliegue con un aviso (para no bloquear el PR antes del setup).
+  # Secretos requeridos (GitHub → Settings → Secrets → Actions):
+  #   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+  # Las variables de entorno de la app (Supabase/Voyage/Anthropic) se configuran
+  # en el proyecto de Vercel, NO aquí.
+  # ===========================================================================
+  deploy:
+    name: Despliegue a Vercel
+    runs-on: ubuntu-latest
+    needs: [performance]
+    timeout-minutes: 15
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      # Sin secretos configurados => se omite el deploy (el job queda en verde).
+      - name: Verificar configuración de Vercel
+        id: check
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Secretos de Vercel ausentes; se omite el despliegue. Configúralos para activarlo."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar Vercel CLI
+        if: steps.check.outputs.configured == 'true'
+        run: npm install -g vercel@latest
+
+      # Se despliega con build REMOTO en Vercel (no `vercel build --prebuilt`):
+      # el pipeline de Vercel resuelve correctamente el monorepo (npm workspaces
+      # + Root Directory = apps/web) y usa las variables de entorno del proyecto.
+      # production en push a main/master; preview en Pull Requests.
+      - name: Desplegar a Vercel
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          FLAG=${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && '--prod' || '' }}
+          URL=$(vercel deploy $FLAG --yes --token="$VERCEL_TOKEN")
+          echo "Desplegado en: $URL"
+          echo "### 🚀 Despliegue Vercel" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"

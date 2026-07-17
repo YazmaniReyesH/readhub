@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { Eye, Heart, MessageCircle } from "lucide-react";
 
@@ -9,8 +10,21 @@ import { getCoverPublicUrl } from "@/services/storage.service";
 import type { ArticleWithStats } from "@readhub/types";
 import { formatDate, formatNumber } from "@/lib/utils";
 
-/** Tarjeta de artículo para el listado de la página principal. */
-export function ArticleCard({ article }: { article: ArticleWithStats }) {
+/**
+ * Tarjeta de artículo para el listado de la página principal.
+ *
+ * `priority` debe activarse solo en las primeras tarjetas (above-the-fold) para
+ * precargar la imagen LCP. Memorizada con `memo`: el feed re-renderiza al
+ * cambiar el estado del hook, pero cada tarjeta solo se repinta si su `article`
+ * o `priority` cambian.
+ */
+export const ArticleCard = memo(function ArticleCard({
+  article,
+  priority = false,
+}: {
+  article: ArticleWithStats;
+  priority?: boolean;
+}) {
   const coverUrl = getCoverPublicUrl(article.image_path);
 
   return (
@@ -20,6 +34,7 @@ export function ArticleCard({ article }: { article: ArticleWithStats }) {
           <CoverImage
             src={coverUrl}
             alt={article.title}
+            priority={priority}
             sizes="(max-width: 768px) 100vw, 400px"
             className="transition-transform duration-300 group-hover:scale-105"
           />
@@ -62,4 +77,4 @@ export function ArticleCard({ article }: { article: ArticleWithStats }) {
       </Card>
     </Link>
   );
-}
+});

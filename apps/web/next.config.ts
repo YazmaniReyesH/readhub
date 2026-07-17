@@ -21,7 +21,16 @@ const nextConfig: NextConfig = {
     "@readhub/ai",
     "@readhub/shared",
   ],
+  // Optimiza los imports de barril de librerías de UI: Next solo incluye en el
+  // bundle los símbolos realmente usados (menos JS enviado al cliente).
+  // lucide-react ya viene optimizado por defecto en Next 15; añadimos base-ui.
+  experimental: {
+    optimizePackageImports: ["@base-ui/react", "lucide-react"],
+  },
   images: {
+    // Sirve las portadas en formatos modernos (AVIF/WebP) cuando el navegador
+    // los soporta: imágenes más ligeras => mejor LCP y menor transferencia.
+    formats: ["image/avif", "image/webp"],
     remotePatterns: supabaseHost
       ? [
           {
