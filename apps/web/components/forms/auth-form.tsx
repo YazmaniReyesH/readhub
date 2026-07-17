@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,8 +18,18 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
   const router = useRouter();
   const { login, register } = useAuth();
 
+  /** Redirige a la home tras autenticarse (navegación soft: conserva la sesión). */
+  function redirectHome() {
+    router.replace("/");
+  }
+
   const [mode, setMode] = useState<Mode>(initialMode);
   const [submitting, setSubmitting] = useState(false);
+  // `mounted` es false durante el render del servidor y hasta que React hidrata
+  // en el cliente. Mantenemos el botón deshabilitado hasta entonces para que un
+  // click temprano no dispare un submit NATIVO del <form> (que recargaría la
+  // página sin ejecutar el handler ni autenticar).
+  const [mounted, setMounted] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [form, setForm] = useState({
     full_name: "",
@@ -30,6 +40,10 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
   });
 
   const isLogin = mode === "login";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function update(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -58,7 +72,7 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
       try {
         await login(parsed.data);
         toast.success("Inicio de sesión exitoso.");
-        router.replace("/");
+        redirectHome();
       } catch (err) {
         // Conserva los datos ingresados (excepto la contraseña).
         setForm((prev) => ({ ...prev, password: "" }));
@@ -86,7 +100,7 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
         setForm((prev) => ({ ...prev, password: "" }));
       } else {
         toast.success("Registro exitoso. ¡Bienvenido a ReadHub!");
-        router.replace("/");
+        redirectHome();
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo registrar.");
@@ -154,7 +168,12 @@ export function AuthForm({ initialMode = "login" }: { initialMode?: Mode }) {
         placeholder="••••••••"
       />
 
-      <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full"
+        disabled={submitting || !mounted}
+      >
         {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
         {isLogin ? "Iniciar sesión" : "Crear cuenta"}
       </Button>

@@ -306,3 +306,21 @@ create policy "documents_delete_owner"
     bucket_id = 'article-documents'
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
+
+-- =============================================================================
+-- Privilegios base de tabla (además de la RLS). Ver migración
+-- 20260717120200_grants.sql para el detalle y el porqué. La RLS sigue siendo la
+-- capa de seguridad real; estos GRANT solo dan el permiso a nivel de tabla que
+-- PostgreSQL exige por debajo (Supabase Cloud los aplica por defecto; un stack
+-- nuevo —local/CI— no).
+-- =============================================================================
+grant usage on schema public to anon, authenticated, service_role;
+grant all on all tables in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+grant all on all routines in schema public to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant all on routines to anon, authenticated, service_role;

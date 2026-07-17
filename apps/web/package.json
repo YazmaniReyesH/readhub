@@ -7,12 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:migrate": "node scripts/run-sql.mjs supabase/migrations",
-    "db:seed": "node scripts/run-sql.mjs supabase/seed.sql",
-    "db:test": "node scripts/run-sql.mjs supabase/tests/rls_validation.sql",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "db:migrate": "node scripts/run-sql.mjs ../../supabase/migrations",
+    "db:seed": "node scripts/run-sql.mjs ../../supabase/seed.sql",
+    "db:test": "node scripts/run-sql.mjs ../../supabase/tests/rls_validation.sql",
     "db:setup": "npm run db:migrate && npm run db:seed && npm run db:test",
     "db:backfill": "tsx scripts/backfill-embeddings.ts",
-    "db:push": "supabase db push",
     "gen:types": "supabase gen types typescript --linked > ../../packages/types/src/database.ts"
   },
   "dependencies": {
@@ -40,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -49,6 +53,7 @@
     "eslint-config-next": "15.5.20",
     "pg": "^8.22.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1"
   }
 }
