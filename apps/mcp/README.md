@@ -43,22 +43,51 @@ npx @modelcontextprotocol/inspector node --import tsx apps/mcp/src/index.ts
 
 ### Conectar a Claude Desktop
 
-En `claude_desktop_config.json`:
+Ubicación del archivo `claude_desktop_config.json`:
+
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json` (o, en la versión de la
+  Microsoft Store, dentro de `...\Packages\Claude_*\LocalCache\Roaming\Claude\`).
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`.
+
+Configuración recomendada (**rutas absolutas**, la más robusta):
 
 ```json
 {
   "mcpServers": {
     "readhub": {
-      "command": "node",
-      "args": ["--import", "tsx", "src/index.ts"],
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--import",
+        "file:///C:/ruta/a/readhub/node_modules/tsx/dist/loader.mjs",
+        "C:/ruta/a/readhub/apps/mcp/src/index.ts"
+      ],
       "cwd": "C:/ruta/a/readhub/apps/mcp"
     }
   }
 }
 ```
 
+Ajusta `C:/ruta/a/readhub` a la ubicación real del repositorio. En macOS/Linux usa
+las rutas equivalentes (`command: "node"` suele bastar, y el loader estaría en
+`node_modules/tsx/dist/loader.mjs`).
+
+> Tras editar la config, **cierra Claude Desktop por completo** (clic derecho en el
+> ícono de la bandeja del sistema → Salir) y vuelve a abrirlo.
+
+### Notas / solución de problemas
+
 > El servidor escribe sus logs en `stderr` para no interferir con el protocolo
-> JSON-RPC (que viaja por `stdout`).
+> JSON-RPC, que viaja por `stdout`. **STDOUT debe contener únicamente JSON-RPC**;
+> cualquier otra salida rompe la conexión.
+
+- **`Cannot find package 'tsx'`** (servidor desconectado): Claude Desktop en Windows
+  no aplica el `cwd`, así que `node --import tsx` no encuentra el paquete. Por eso se
+  usan **rutas absolutas** al loader de tsx y al script (como arriba), en vez del
+  `--import tsx` relativo.
+- **`Unexpected token '◇' ... is not valid JSON`**: lo causaba el mensaje "injected
+  env" de dotenv v17 escrito en STDOUT. Se resolvió con `quiet: true` al cargar el
+  `.env.local` (ver `src/env.ts`).
+- **Logs de diagnóstico de Claude Desktop:** `...\Claude\logs\mcp-server-readhub.log`.
 
 ## Arquitectura
 
